@@ -1,0 +1,24 @@
+﻿<Window x:Class="AsyncFirstExample.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:AsyncFirstExample"
+        mc:Ignorable="d"
+        Title="AsyncFirstExample" Height="350" Width="525">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <WrapPanel Grid.Row="0" Orientation="Horizontal">
+            <Label>URL</Label>
+            <TextBox x:Name="textBoxUrl" Text="http://" MinWidth="250" Height="20" Margin="16,0,0,0" />
+            <Button x:Name="buttonGo" Content="GO" MinWidth="80" Width="Auto" Click="buttonGo_Click" Margin="16,0,0,0"/>
+            <Button x:Name="buttonClear" Content="Clear" MinWidth="80" Width="Auto" Margin="16,0,0,0" Click="buttonClear_Click"/>
+        </WrapPanel>
+        <Grid Grid.Row="1" Margin="0,10,0,0">
+            <TextBox Name="textBlockContents" Width="Auto" Height="Auto" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto"></TextBox>
+        </Grid>
+    </Grid>
+</Window>

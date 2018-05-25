@@ -10,6 +10,7 @@ using System.Windows.Forms;
 using IronPython.Hosting;
 using IronPython.Runtime;
 using IronPython.Runtime.Exceptions;
+using IronPython.Modules;
 using Microsoft.Scripting;
 using Microsoft.Scripting.Hosting;
 using System.IO;
@@ -17,6 +18,45 @@ using System.Dynamic;
 
 namespace PythonTest1
 {
+    public class SharpCalculator
+    {
+        public double add(double argA, double argB)
+        {
+            return argA + argB;
+        }
+
+        public double sub(double argA, double argB)
+        {
+            return argA - argB;
+        }
+    }
+
+    public class DynamicCalc : DynamicObject
+    {
+        SharpCalculator calc_;
+        public DynamicCalc()
+        {
+            calc_ = new SharpCalculator();
+        }
+
+        public override bool TryGetMember(GetMemberBinder binder, out object result)
+        {
+            result = null;
+            switch (binder.Name)
+            {
+                case "add":
+                    result = (Func<double, double, double>)((double a, double b) => calc_.add(a, b));
+                    return true;
+                case "sub":
+                    result = (Func<double, double, double>)((double a, double b) => calc_.sub(a, b));
+                    return false;
+                default:
+                    break;
+            }
+            return false;
+        }
+    }
+
     public partial class Form1 : Form
     {
         public string ScriptPath { get; set; }
@@ -39,7 +79,12 @@ namespace PythonTest1
 
         public void Execute()
         {
+            string app_path = Directory.GetCurrentDirectory();
             ScriptEngine script_engine = Python.CreateEngine();
+            ICollection<string> paths = script_engine.GetSearchPaths();
+            paths.Add(app_path);
+            script_engine.SetSearchPaths(paths);
+
             ScriptSource script_source = script_engine.CreateScriptSourceFromFile("Test.py", Encoding.ASCII, SourceCodeKind.File);
             ScriptScope sys = script_engine.GetSysModule();
 
@@ -55,7 +100,7 @@ namespace PythonTest1
                 script_engine.Runtime.IO.SetOutput(memory_stream, new StreamWriter(memory_stream));
                 try
                 {
-                    object thing = script_source.Execute(scope);
+                    dynamic thing = script_source.Execute(scope);
                     if (thing != null)
                         Result = thing.ToString();
 
@@ -66,6 +111,13 @@ namespace PythonTest1
 
                     var Fnhelloworld3 = scope.GetVariable<Func<object>>("HelloWorld3");
                     Fnhelloworld3();
+
+                    dynamic calc = scope.Calculator();
+                    var add_result = calc.add(3, 4);
+                    var sub_result = calc.sub(3, 4);
+
+                    var fn_make_login_id = scope.GetVariable<Func<object>>("make_login_id");
+                    var login_id = fn_make_login_id();
                     /*
                     // call def HelloWorld2(data) :
                     var Fnhelloworld2 = scope.GetVariable<Func<object, object>>("HelloWorld2");
@@ -122,12 +174,19 @@ namespace PythonTest1
             dynamic proxy = new ExpandoObject();
             proxy.ShowMessage = new Action<string>(ShowMessage);
             proxy.Add = new Func<int, int, int>(Add);
+            proxy.Random = new Func<int, int, int>(Random);
             return proxy;
         }
 
         public void ShowMessage(string message)
         {
             MessageBox.Show(message);
+        }
+
+        public int Random(int min_value, int max_value)
+        {
+            Random rnd = new Random();
+            return rnd.Next(min_value, max_value);
         }
 
         public int Add(int a, int b)
